@@ -1,3 +1,5 @@
-export default defineEventHandler(async () => {
-  return await $fetch("https://dummyjson.com/products");
-});
+import type { ProductApiResponse } from "~~/app/types";
+
+export default defineEventHandler((event) =>
+  fetchFromDummyJson<ProductApiResponse>(event, "/products"),
+);
