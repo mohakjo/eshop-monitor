@@ -1,17 +1,39 @@
 services:
+  # Reverse proxy devant l'application web. Le routage est déclaré dans
+  # traefik/dynamic.yml (file provider) : aucun accès au socket Docker.
+  traefik:
+    image: traefik:v3.3
+    container_name: traefik
+    command:
+      - --providers.file.filename=/etc/traefik/dynamic.yml
+      - --providers.file.watch=true
+      - --entrypoints.web.address=:80
+      - --api.dashboard=true
+      - --api.insecure=true
+      - --log.level=INFO
+    ports:
+      - "80:80" # application web
+      - "8081:8080" # tableau de bord Traefik
+    volumes:
+      - ./traefik/dynamic.yml:/etc/traefik/dynamic.yml:ro
+    restart: unless-stopped
+    depends_on:
+      - nuxt
+
   nuxt:
     container_name: nuxtapp
     build:
       context: .
       dockerfile: Dockerfile
-    ports:
-      - "4000:3000"
+    expose:
+      - "3000"
     # Les identifiants Umami/GlitchTip sont propres à chaque instance : ils sont
     # lus depuis .env au démarrage (voir .env.example). Sans ce fichier, les
     # valeurs par défaut de nuxt.config.ts s'appliquent.
     env_file:
       - path: .env
         required: false
+    restart: unless-stopped
     depends_on:
       umami:
         condition: service_healthy
@@ -27,16 +49,21 @@ services:
   glitchtip:
     image: glitchtip/glitchtip:6 # Check https://glitchtip.com/blog/ for new major versions
     depends_on:
-      - glitchtip-db
+      glitchtip-db:
+        condition: service_started
+      glitchtip-redis:
+        condition: service_healthy
     ports:
       - "8000:8000"
     environment:
       DATABASE_URL: postgres://postgres:postgres@glitchtip-db:5432/glitchtip
-      VALKEY_URL: ""
+      VALKEY_URL: redis://glitchtip-redis:6379/0
       SECRET_KEY: 8b092f41428ff7a8fd1376c4f3a7368879867139f29d58e34c2bcd4c95c00e21
       EMAIL_URL: consolemail:// # Example smtp://email:password@smtp_url:port https://glitchtip.com/documentation/install#configuration
       GLITCHTIP_DOMAIN: http://localhost:8000 # Change this to your domain
       DEFAULT_FROM_EMAIL: email@example.com # Change this to your email
+      ENABLE_USER_REGISTRATION: "True" # Nécessaire pour créer le premier compte
+      ENABLE_ORGANIZATION_CREATION: "True" # Sinon l'organisation ne peut pas être créée depuis l'UI
       ENABLE_ADMIN: "False" # Set to True to enable Django Admin at /admin/
       ENABLE_OPENAPI: "False" # Set to True to enable OpenAPI spec at /api/docs
       GLITCHTIP_ENABLE_MCP: "False" # Set to True to enable MCP server
@@ -45,6 +72,19 @@ services:
     restart: unless-stopped
     volumes:
       - uploads:/code/uploads
+
+  # File d'attente des tâches de fond de GlitchTip (Valkey, fork open source
+  # de Redis). Sans elle, l'ingestion des événements reste synchrone.
+  glitchtip-redis:
+    image: valkey/valkey:8-alpine
+    restart: unless-stopped
+    volumes:
+      - valkey-data:/data
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   glitchtip-db:
     image: postgres:18
@@ -94,3 +134,4 @@ volumes:
   pg-data:
   uploads:
   umami-db-data:
+  valkey-data:

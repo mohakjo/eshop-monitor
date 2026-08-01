@@ -6,6 +6,7 @@ export default defineNuxtPlugin((nuxtApp) => {
   Sentry.init({
     app: nuxtApp.vueApp,
     dsn: glitchtip.dsn,
+    environment: glitchtip.environment,
     tracesSampleRate: glitchtip.tracesSampleRate,
     integrations: [Sentry.browserTracingIntegration()],
   });

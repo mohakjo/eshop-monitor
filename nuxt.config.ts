@@ -28,7 +28,9 @@ export default defineNuxtConfig({
       },
 
       glitchtip: {
-        dsn: "CHANGE_ME@localhost:8000/1",
+        // Un DSN valide inclut le schéma : http://<clé publique>@<hôte>/<id>
+        dsn: "http://CHANGE_ME@localhost:8000/1",
+        environment: "production",
         tracesSampleRate: 1,
       },
     },

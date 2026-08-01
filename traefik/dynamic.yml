@@ -1,0 +1,19 @@
+# Configuration dynamique de Traefik.
+#
+# On utilise le "file provider" plutôt que le provider Docker : cela évite de
+# monter /var/run/docker.sock dans le conteneur (le proxy n'a donc aucun accès
+# au daemon) et rend la stack reproductible quelle que soit la configuration
+# de Docker Desktop, qui n'expose pas toujours le socket par défaut.
+http:
+  routers:
+    nuxt:
+      rule: "PathPrefix(`/`)"
+      entryPoints:
+        - web
+      service: nuxt
+
+  services:
+    nuxt:
+      loadBalancer:
+        servers:
+          - url: "http://nuxt:3000"

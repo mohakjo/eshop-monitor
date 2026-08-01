@@ -14,12 +14,17 @@ docker compose up --build -d
 
 Une fois le stack démarré :
 
-| Service   | URL                   |
-| --------- | --------------------- |
-| Boutique  | http://localhost:4000 |
-| Umami     | http://localhost:3000 |
-| GlitchTip | http://localhost:8000 |
-| Adminer   | http://localhost:8080 |
+| Service              | URL                   |
+| -------------------- | --------------------- |
+| Boutique (Traefik)   | http://localhost      |
+| Umami                | http://localhost:3000 |
+| GlitchTip            | http://localhost:8000 |
+| Adminer              | http://localhost:8080 |
+| Tableau bord Traefik | http://localhost:8081 |
+
+L'application n'est pas exposée directement : elle est servie par **Traefik**
+sur le port 80. Le routage est déclaré dans `traefik/dynamic.yml` (file
+provider), ce qui évite de monter le socket Docker dans le conteneur proxy.
 
 > Umami occupe le port 3000, celui qu'utilise `nuxt dev` par défaut. Pour
 > travailler en local pendant que le stack tourne :
@@ -37,11 +42,28 @@ cp .env.example .env
 ```
 
 1. **Umami** — connectez-vous sur http://localhost:3000 (compte par défaut
-   `admin` / `umami`), créez un site, puis reportez son identifiant dans
-   `NUXT_PUBLIC_UMAMI_WEBSITE_ID`.
-2. **GlitchTip** — créez un compte et un projet sur http://localhost:8000,
-   puis reportez le DSN affiché dans `NUXT_PUBLIC_GLITCHTIP_DSN`.
+   `admin` / `umami`), créez un site via _Websites > Add website_, puis
+   reportez son identifiant dans `NUXT_PUBLIC_UMAMI_WEBSITE_ID`.
+2. **GlitchTip** — créez un compte sur http://localhost:8000, puis une
+   organisation, une équipe et un projet. Le DSN complet est affiché dans
+   _Settings > Client Keys (DSN)_ ; reportez-le dans
+   `NUXT_PUBLIC_GLITCHTIP_DSN`. Le schéma `http://` fait partie du DSN.
 3. Appliquez la configuration : `docker compose up -d nuxt`.
+
+### Architecture des services
+
+| Service           | Rôle                                          |
+| ----------------- | --------------------------------------------- |
+| `traefik`         | Reverse proxy devant l'application (port 80)  |
+| `nuxt`            | Application e-commerce (Nuxt 4, non exposée)  |
+| `glitchtip`       | Centralisation des erreurs                    |
+| `glitchtip-db`    | PostgreSQL dédié à GlitchTip                  |
+| `glitchtip-redis` | Valkey — file des tâches de fond de GlitchTip |
+| `umami`           | Analytique sans cookies                       |
+| `umami-db`        | PostgreSQL dédié à Umami                      |
+| `adminer`         | Console d'administration des bases            |
+
+Volumes persistants : `pg-data`, `umami-db-data`, `uploads`, `valkey-data`.
 
 ![Umami Config Example](screenshots/Umami6.png)
 
