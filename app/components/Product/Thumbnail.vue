@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { Product } from "~/types";
 
-const product = defineProps<Product>();
+defineProps<{ product: Product }>();
 </script>
 
 <template>

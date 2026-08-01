@@ -24,15 +24,10 @@ const { sortOrder, sortedProducts } = useProductSort(products);
       Erreur : {{ error.message }}
     </p>
 
-    <div
+    <ProductGrid
       v-else
-      class="grid grid-cols-1 gap-4 py-4 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3 xl:grid-cols-4"
-    >
-      <LazyProductThumbnail
-        v-for="product in sortedProducts"
-        :key="product.id"
-        v-bind="product"
-      />
-    </div>
+      :products="sortedProducts"
+      class="grid-cols-1 gap-4 py-4 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3 xl:grid-cols-4"
+    />
   </div>
 </template>

@@ -18,16 +18,11 @@ const { sortOrder, sortedProducts } = useProductSort(productsInCategory);
 
     <ProductSortSelect v-model="sortOrder" />
 
-    <div
+    <ProductGrid
       v-if="sortedProducts.length"
-      class="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4"
-    >
-      <LazyProductThumbnail
-        v-for="product in sortedProducts"
-        :key="product.id"
-        v-bind="product"
-      />
-    </div>
+      :products="sortedProducts"
+      class="grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4"
+    />
 
     <p v-else class="text-gray-500">Aucun produit dans cette catégorie.</p>
   </section>
