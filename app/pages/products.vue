@@ -1,21 +1,6 @@
 <script setup lang="ts">
 const { products, status, error } = useProducts();
-
-const sortOrder = ref("default");
-
-const sortedProducts = computed(() => {
-  const list = [...products.value];
-
-  if (sortOrder.value === "price-desc") {
-    return list.sort((a, b) => b.price - a.price);
-  }
-
-  if (sortOrder.value === "price-asc") {
-    return list.sort((a, b) => a.price - b.price);
-  }
-
-  return list;
-});
+const { sortOrder, sortedProducts } = useProductSort(products);
 </script>
 
 <template>
@@ -26,13 +11,7 @@ const sortedProducts = computed(() => {
       Tous nos produits
     </h1>
 
-    <div class="mb-4 flex justify-end">
-      <select v-model="sortOrder" class="rounded border px-2 py-1 text-sm">
-        <option value="default">Par défaut</option>
-        <option value="price-desc">Prix décroissant</option>
-        <option value="price-asc">Prix croissant</option>
-      </select>
-    </div>
+    <ProductSortSelect v-model="sortOrder" />
 
     <p
       v-if="status === 'pending'"
