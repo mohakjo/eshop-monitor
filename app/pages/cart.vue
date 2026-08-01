@@ -54,21 +54,10 @@ onMounted(() => {
         </p>
 
         <button>
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke-width="1.5"
-            stroke="currentColor"
+          <IconPlus
             class="text-blue size-6 rotate-45 cursor-pointer"
             @click="cartStore.removeFromCart(item)"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              d="M12 4.5v15m7.5-7.5h-15"
-            />
-          </svg>
+          />
         </button>
       </div>
       <div class="mt-6 flex flex-col items-end gap-4">
