@@ -67,8 +67,6 @@ cp .env.example .env
 
 Volumes persistants : `pg-data`, `umami-db-data`, `uploads`, `valkey-data`.
 
-![Umami Config Example](screenshots/Umami6.png)
-
 ### Structure
 
 ```
@@ -115,60 +113,152 @@ Les comptes utilisateurs proviennent de l'API DummyJSON. Exemple :
 
 Liste complète : https://dummyjson.com/users
 
-## Intégration GlitchTip
+# Rapport d'observabilité
 
-Le SDK `@sentry/vue` a été intégré via un plugin Nuxt (app/plugins/glitchtip.client.ts). Ce plugin s'initialise côté navigateur et s'accroche au gestionnaire d'erreurs global de Vue, capturant automatiquement toutes les exceptions JavaScript non gérées.
-
-La simulation de panne dans paiement.vue consiste en une promesse rejetée aléatoirement une fois sur trois, envoyée explicitement à GlitchTip via Sentry.captureException(error).
-
-#### Ce que GlitchTip a capturé :
-
-- Type : TypeError
-- Message : Payment gateway timeout: charge_id is undefined
-- Navigateur : Chrome 148.0.0 sur Windows 10
-- Environnement : production
-- Breadcrumbs : GlitchTip a enregistré tout le parcours utilisateur avant l'erreur : navigation vers /paiement, remplissage des champs, puis clic sur le bouton "Confirmer la commande" à 10:35:14.
-
-#### Comment un développeur résoudrait cette erreur :
-
-Grâce aux breadcrumbs, le développeur sait exactement ce que l'utilisateur a fait avant le crash. Il identifie que l'erreur survient lors du submit du formulaire de paiement et peut corriger la gestion asynchrone du gateway de paiement.
-
-![GlitchTip](screenshots/Glitchtip1.png)
-![GlitchTip](screenshots/Glitchtip2.png)
+> Mesures relevées sur l'instance locale, fenêtre « Last 24 hours », après une
+> campagne de test de quatre parcours utilisateurs menés chacun dans un
+> navigateur distinct (Chrome, Firefox, Safari, Edge). Umami identifiant un
+> visiteur par un condensé IP + User-Agent, une fenêtre de navigation privée ne
+> compte pas comme un nouveau visiteur : c'est le changement de navigateur qui
+> crée le visiteur.
 
 ## Intégration Umami
 
-Umami a également été intégré au projet, permettant de récupérer des données liées à la navigation des utilisateurs.
+Le tracker est injecté côté navigateur par `app/plugins/umami.client.ts`, qui
+charge `script.js` depuis l'instance Umami et lui transmet l'identifiant du
+site. Aucun cookie n'est déposé pour l'analytique.
 
-Ci-dessous le dashboard Umami, qui affiche plusieurs informations comme le nombre de visiteurs uniques, le nombre total de visites, ou encore le taux de rebond.
+### Métriques standards
 
-Ici, on voit que le taux de rebond est de 33%, ce qui pourrait indiquer des soucis de conception au sein de l'application, comme une erreur chez certains utilisateurs ou une page d'accueil très peu attractive.
+![Dashboard Umami](screenshots/umami-dashboard.png)
 
-![Custom events](screenshots/Umami0.png)
+| Indicateur               | Valeur   |
+| ------------------------ | -------- |
+| Visiteurs uniques        | 4        |
+| Visites (sessions)       | 4        |
+| Pages vues               | 18       |
+| Taux de rebond           | **25 %** |
+| Durée moyenne de session | **34 s** |
 
-Sur le dashboard des événements, on peut voir différentes informations utiles, telles que le nombre d'événements déclenchés et le nombre de visites. Ce graphique n'est pas lié au tunnel d'achat, il répertorie uniquement tous les événements.
+Répartition : `chrome`, `firefox`, `safari`, `edge-chromium` — un visiteur
+chacun, tous sur macOS et sur poste fixe/portable.
 
-#### Événements personnalisés
+**Lecture du taux de rebond.** 25 % signifie qu'une session sur quatre s'est
+arrêtée sur la page d'accueil sans aucune autre page vue. Sur un catalogue,
+c'est un niveau sain : les trois autres sessions ont toutes atteint au moins
+une fiche produit. Avec 18 pages vues pour 4 visites, on est à 4,5 pages par
+session, ce qui traduit une navigation exploratoire réelle plutôt que des
+arrivées accidentelles. Une durée moyenne de 34 s reste courte : elle est
+tirée vers le bas par la session ayant rebondi, et par le fait que les
+parcours de test étaient dirigés, sans temps de lecture.
 
-![Custom events](screenshots/Umami1.png)
+### Suivi du tunnel d'achat
 
-Ici, on peut voir grâce aux événements personnalisés que 3 utilisateurs se sont rendus sur des pages produit, mais seulement 2 ont ajouté le produit en question à leur panier puis ont suivi le tunnel de paiement jusqu'à la fin.
+Les quatre événements du plan de marquage sont émis depuis
+`app/composables/useAnalytics.ts`, qui centralise les noms d'événements et la
+construction des propriétés.
 
-![Checkout conversion](screenshots/Umami2.png)
+| Étape              | Événements | Perte vs étape précédente |
+| ------------------ | ---------- | ------------------------- |
+| `view_product`     | 5          | —                         |
+| `add_to_cart`      | 3          | −40 %                     |
+| `checkout_start`   | 2          | −33 %                     |
+| `checkout_success` | 1          | −50 %                     |
 
-Il est possible d'ajouter des propriétés aux événements personnalisés, comment on peut le voir ici avec la propriété cart_total qui a été ajoutée à l'événement checkout_success.
+**Taux de conversion global** : 1 `checkout_success` pour 4 visites = **25 %**.
 
-On peut alors voir le détail des paniers utilisateurs et ainsi calculer le panier moyen, par exemple. Ici, le panier moyen est de 12.65€.
+**Analyse des abandons.** La plus grosse fuite en valeur absolue se situe entre
+la consultation d'une fiche produit et l'ajout au panier : deux consultations
+sur cinq ne débouchent sur rien. C'est un écart normal en e-commerce
+(comparaison, simple curiosité), mais c'est le levier au plus fort volume.
 
-![Average cart amount](screenshots/Umami3.png)
+La perte la plus préoccupante est la dernière : **une commande sur deux se
+perd entre `checkout_start` et `checkout_success`**, c'est-à-dire à l'étape de
+paiement. C'est précisément le symptôme décrit par le Product Owner, et il est
+corrélé à la panne intermittente du prestataire de paiement simulée dans
+`app/pages/paiement.vue` (une tentative sur trois échoue). L'analytique seule
+ne permet pas de trancher entre un abandon volontaire et une erreur technique :
+c'est le croisement avec GlitchTip qui donne la réponse.
 
-On pourrait imaginer une stratégie de publicité mise en place sur différents réseaux sociaux, et grâce à Umami, il serait possible de visionner la provenance de chaque utilisateur.
+### Métriques métier via les propriétés d'événements
 
-Par exemple, en rajoutant ces paramètres au lien de l'application :
+Les événements `checkout_start` et `checkout_success` transportent
+`cart_total`, `cart_items_count` et `cart_quantity`, ce qui permet de
+reconstituer le détail des paniers :
 
-`?utm_source=facebook&utm_medium=social&utm_campaign=product_discovery`
+| Événement          | Panier  | Articles | Unités |
+| ------------------ | ------- | -------- | ------ |
+| `checkout_start`   | 9,99 €  | 1        | 1      |
+| `checkout_start`   | 39,97 € | 2        | 3      |
+| `checkout_success` | 39,97 € | 2        | 3      |
 
-Chaque utilisateur cliquant sur ce lien incrémenterait le compteur des paramètres spécifiés. On pourrait alors proposer différents liens en fonction du besoin et des différents partenaires affichant les liens que nous leur fournissons.
+**Panier moyen des commandes abouties : 39,97 €** (une commande).
 
-![Link source](screenshots/Umami4.png)
-![Link source](screenshots/Umami5.png)
+Le rapprochement est parlant : le panier abandonné est le plus petit (9,99 €,
+un seul article), celui qui va au bout est le plus gros. Sur un volume réel, on
+vérifierait si les petits paniers abandonnent davantage — auquel cas un seuil
+de livraison gratuite serait le levier naturel.
+
+> ⚠️ La moyenne porte ici sur **une seule commande** : elle est illustrative de
+> la mécanique de mesure, pas statistiquement significative.
+
+### Suivi de l'origine du trafic
+
+Umami classe nativement les visiteurs par référent et par paramètres UTM. En
+diffusant l'application derrière un lien de campagne :
+
+```
+http://localhost/?utm_source=facebook&utm_medium=social&utm_campaign=product_discovery
+```
+
+chaque clic alimente les rapports _Referrers_ et _Campaigns_, ce qui permet
+d'attribuer les conversions à une source et de comparer le panier moyen entre
+canaux.
+
+> Aucune campagne n'a été jouée pendant cette session de test : les rapports
+> UTM sont donc vides sur les relevés ci-dessus.
+
+## Intégration GlitchTip
+
+Le SDK `@sentry/vue` est initialisé côté navigateur par
+`app/plugins/glitchtip.client.ts`. Il s'accroche au gestionnaire d'erreurs
+global de Vue et remonte automatiquement toute exception JavaScript non gérée,
+avec le navigateur, le système d'exploitation, la pile d'appels et les
+breadcrumbs du parcours précédant l'incident.
+
+### Simulation de panne
+
+`app/pages/paiement.vue` simule une défaillance du prestataire de paiement : la
+fonction `chargeCard()` lève une `TypeError` une fois sur trois, capturée puis
+transmise explicitement par `Sentry.captureException(error)`.
+
+```
+TypeError: Payment gateway timeout: charge_id is undefined
+```
+
+Pour la déclencher : dérouler le tunnel jusqu'à `/paiement`, renseigner les
+champs, puis valider plusieurs fois — l'incident apparaît dans le projet
+GlitchTip avec son type, son message, le contexte navigateur/OS et la pile
+d'appels pointant sur `chargeCard()` puis `onSubmit()`.
+
+### Suivi de performance
+
+`app/composables/usePageLoadSpan.ts` mesure le temps de chargement des deux
+étapes du tunnel qui portent un formulaire, via les spans
+`checkout-summary-load` (récapitulatif) et `checkout-payment-load` (paiement).
+Le span s'ouvre pendant le `setup()` du composant et se ferme après la première
+frame effectivement peinte, de façon à mesurer le délai réellement perçu par
+l'utilisateur.
+
+### Exploitation par un développeur
+
+Les breadcrumbs reconstituent le parcours ayant mené au crash : navigation vers
+`/paiement`, saisie des champs, clic sur « Confirmer la commande ». Combinés à
+la pile d'appels, ils localisent l'échec dans la promesse de paiement plutôt
+que dans le rendu du formulaire. Le développeur sait alors qu'il doit fiabiliser
+l'appel au prestataire — reprise sur erreur, délai d'attente explicite, message
+utilisateur — et non corriger la validation du formulaire.
+
+C'est aussi ce qui permet de qualifier la fuite de 50 % observée à la dernière
+étape du tunnel Umami : si le volume d'incidents GlitchTip suit celui des
+`checkout_start` non convertis, l'abandon est technique et non commercial.
