@@ -56,9 +56,11 @@ services:
     ports:
       - "8000:8000"
     environment:
-      DATABASE_URL: postgres://postgres:postgres@glitchtip-db:5432/glitchtip
+      DATABASE_URL: postgres://postgres:${GLITCHTIP_DB_PASSWORD:-postgres}@glitchtip-db:5432/glitchtip
       VALKEY_URL: redis://glitchtip-redis:6379/0
-      SECRET_KEY: 8b092f41428ff7a8fd1376c4f3a7368879867139f29d58e34c2bcd4c95c00e21
+      # Valeur de développement : à surcharger via .env pour tout déploiement
+      # réel (`openssl rand -hex 32`).
+      SECRET_KEY: ${GLITCHTIP_SECRET_KEY:-8b092f41428ff7a8fd1376c4f3a7368879867139f29d58e34c2bcd4c95c00e21}
       EMAIL_URL: consolemail:// # Example smtp://email:password@smtp_url:port https://glitchtip.com/documentation/install#configuration
       GLITCHTIP_DOMAIN: http://localhost:8000 # Change this to your domain
       DEFAULT_FROM_EMAIL: email@example.com # Change this to your email
@@ -91,19 +93,25 @@ services:
     environment:
       POSTGRES_DB: glitchtip
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_HOST_AUTH_METHOD: "trust" # Consider removing this and setting a password
+      POSTGRES_PASSWORD: ${GLITCHTIP_DB_PASSWORD:-postgres}
     restart: unless-stopped
     volumes:
       - pg-data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   umami:
     image: ghcr.io/umami-software/umami:latest
     ports:
       - "3000:3000"
     environment:
-      DATABASE_URL: postgresql://umami:umami@umami-db:5432/umami
-      APP_SECRET: N09p80unIQBlVVApDkENHaLEgJfqnVuyNfuSC7IGv1g=
+      DATABASE_URL: postgresql://umami:${UMAMI_DB_PASSWORD:-umami}@umami-db:5432/umami
+      # Valeur de développement : à surcharger via .env pour tout déploiement
+      # réel (`openssl rand -base64 32`).
+      APP_SECRET: ${UMAMI_APP_SECRET:-N09p80unIQBlVVApDkENHaLEgJfqnVuyNfuSC7IGv1g=}
     depends_on:
       umami-db:
         condition: service_healthy
@@ -120,7 +128,7 @@ services:
     environment:
       POSTGRES_DB: umami
       POSTGRES_USER: umami
-      POSTGRES_PASSWORD: umami
+      POSTGRES_PASSWORD: ${UMAMI_DB_PASSWORD:-umami}
     volumes:
       - umami-db-data:/var/lib/postgresql/data
     restart: unless-stopped

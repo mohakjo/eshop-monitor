@@ -1,14 +1,16 @@
-# FooCommerce
+# FooCommerce — E-Shop Monitor
 
-> https://github.com/alexy103/projet-analytics
+> https://github.com/mohakjo/eshop-monitor
 
-Une application e-commerce réalisée avec Nuxt 4 et Vue.js 3.
+Application e-commerce (Nuxt 4, Vue 3) instrumentée avec une stack
+d'observabilité auto-hébergée : **Umami** pour l'analytique du tunnel d'achat et
+**GlitchTip** pour la centralisation des erreurs.
 
 ## Installation
 
 ```bash
-git clone git@github.com:alexy103/projet-analytics.git
-cd projet-analytics
+git clone git@github.com:mohakjo/eshop-monitor.git
+cd eshop-monitor
 docker compose up --build -d
 ```
 
