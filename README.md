@@ -12,11 +12,50 @@ cd projet-analytics
 docker compose up --build -d
 ```
 
-Si besoin, lors de la configuration de GlitchTip, vous devez copier le DSN fourni par l'application vers le fichier de configuration de GlitchTip (app/plugins/glitchtip.client.ts).
+### Configuration
 
-Pour Umami, il faut créer un nouveau site depuis l'interface web (:3000) et adapter l'ID du site dans app/plugins/umami.client.ts.
+Le DSN GlitchTip et l'ID de site Umami ne sont plus écrits dans le code : ils
+sont exposés dans `runtimeConfig` (nuxt.config.ts) et surchargeables par
+variable d'environnement, sans rebuild.
+
+```bash
+cp .env.example .env
+```
+
+- Lors de la configuration de GlitchTip, copiez le DSN fourni par l'interface
+  dans `NUXT_PUBLIC_GLITCHTIP_DSN`.
+- Pour Umami, créez un nouveau site depuis l'interface web (:3000) et reportez
+  son identifiant dans `NUXT_PUBLIC_UMAMI_WEBSITE_ID`.
 
 ![Umami Config Example](screenshots/Umami6.png)
+
+### Structure
+
+```
+app/
+  components/
+    Base/       champ de formulaire réutilisable (BaseField)
+    Checkout/   blocs adresse de livraison / facturation
+    Icon/       icônes SVG (Bag, Menu, Close, Plus, Minus, ...)
+    Product/    vignette, grille, sélecteur de tri, badge catégorie
+  composables/  useProducts, useProduct, useCategories, useProductSort,
+                useAnalytics, useFormValidation
+  stores/       panier (cookie) et authentification
+  types/        Product, CartItem, Address, AuthUser, typage de window.umami
+  utils/        helpers de validation
+server/
+  api/          proxy vers DummyJSON + endpoint de commande
+  utils/        client DummyJSON basé sur le runtimeConfig
+```
+
+### Scripts
+
+```bash
+npm run dev           # serveur de développement
+npm run build         # build de production
+npm run format        # Prettier sur tout le dépôt
+npm run format:check  # vérification du formatage
+```
 
 ## Explications du projet initial
 
