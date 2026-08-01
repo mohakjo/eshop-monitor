@@ -1,10 +1,6 @@
-import type { Product } from "~/types/Product";
+import type { CartItem, Product } from "~/types";
 
 export const useCartStore = defineStore("cart", () => {
-  type CartItem = Product & {
-    quantity: number;
-  };
-
   const cart = useCookie<CartItem[]>("cart", {
     default: () => [],
   });

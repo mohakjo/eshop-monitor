@@ -1,11 +1,4 @@
-interface AuthUser {
-  id: number;
-  username: string;
-  email: string;
-  firstName: string;
-  lastName: string;
-  token: string;
-}
+import type { AuthUser } from "~/types";
 
 export const useAuthStore = defineStore("auth", () => {
   const user = useCookie<AuthUser | null>("user", {

@@ -1,4 +1,4 @@
-import type { ProductApiResponse } from "~/types/Product";
+import type { ProductApiResponse } from "~/types";
 
 export function useProducts() {
   const { data, status, error } = useFetch<ProductApiResponse>("/api/products");
