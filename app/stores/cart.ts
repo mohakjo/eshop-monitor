@@ -1,5 +1,7 @@
 import type { CartItem, Product } from "~/types";
 
+const CLEAR_CART_CONFIRMATION = "Voulez-vous vraiment vider votre panier ?";
+
 export const useCartStore = defineStore("cart", () => {
   const { trackProduct } = useAnalytics();
 
@@ -15,15 +17,30 @@ export const useCartStore = defineStore("cart", () => {
     cart.value.reduce((total, item) => total + item.price * item.quantity, 0),
   );
 
-  function addToCart(product: Product, quantity: number = 1) {
-    const existingItem = cart.value.find((item) => item.id === product.id);
+  function getItem(productId: number) {
+    return cart.value.find((item) => item.id === productId);
+  }
 
-    if (existingItem) {
-      cart.value = cart.value.map((item) =>
-        item.id === product.id
-          ? { ...item, quantity: item.quantity + quantity }
-          : item,
-      );
+  function isInCart(productId: number) {
+    return Boolean(getItem(productId));
+  }
+
+  /** Réécrit la ligne du produit ciblé en repartant d'un nouveau tableau. */
+  function replaceItem(
+    productId: number,
+    update: (item: CartItem) => CartItem,
+  ) {
+    cart.value = cart.value.map((item) =>
+      item.id === productId ? update(item) : item,
+    );
+  }
+
+  function addToCart(product: Product, quantity: number = 1) {
+    if (isInCart(product.id)) {
+      replaceItem(product.id, (item) => ({
+        ...item,
+        quantity: item.quantity + quantity,
+      }));
     } else {
       cart.value = [...cart.value, { ...product, quantity }];
     }
@@ -37,9 +54,7 @@ export const useCartStore = defineStore("cart", () => {
       return;
     }
 
-    cart.value = cart.value.map((item) =>
-      item.id === product.id ? { ...item, quantity } : item,
-    );
+    replaceItem(product.id, (item) => ({ ...item, quantity }));
   }
 
   function removeFromCart(product: Product) {
@@ -47,18 +62,10 @@ export const useCartStore = defineStore("cart", () => {
   }
 
   function clearCart() {
-    if (confirm("Voulez-vous vraiment vider votre panier ?")) {
-      cart.value = [];
-      navigateTo("/");
-    }
-  }
+    if (!confirm(CLEAR_CART_CONFIRMATION)) return;
 
-  function isInCart(productId: number) {
-    return cart.value.some((item) => item.id === productId);
-  }
-
-  function getItem(productId: number) {
-    return cart.value.find((item) => item.id === productId);
+    cart.value = [];
+    navigateTo("/");
   }
 
   return {
