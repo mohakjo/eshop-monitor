@@ -6,6 +6,15 @@ services:
       dockerfile: Dockerfile
     ports:
       - "4000:3000"
+    # Les identifiants Umami/GlitchTip sont propres à chaque instance : ils sont
+    # lus depuis .env au démarrage (voir .env.example). Sans ce fichier, les
+    # valeurs par défaut de nuxt.config.ts s'appliquent.
+    env_file:
+      - path: .env
+        required: false
+    depends_on:
+      umami:
+        condition: service_healthy
 
   adminer:
     image: adminer

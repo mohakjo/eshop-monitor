@@ -12,20 +12,36 @@ cd projet-analytics
 docker compose up --build -d
 ```
 
+Une fois le stack démarré :
+
+| Service   | URL                   |
+| --------- | --------------------- |
+| Boutique  | http://localhost:4000 |
+| Umami     | http://localhost:3000 |
+| GlitchTip | http://localhost:8000 |
+| Adminer   | http://localhost:8080 |
+
+> Umami occupe le port 3000, celui qu'utilise `nuxt dev` par défaut. Pour
+> travailler en local pendant que le stack tourne :
+> `npm run dev -- --port 3001`.
+
 ### Configuration
 
-Le DSN GlitchTip et l'ID de site Umami ne sont plus écrits dans le code : ils
-sont exposés dans `runtimeConfig` (nuxt.config.ts) et surchargeables par
-variable d'environnement, sans rebuild.
+Le DSN GlitchTip et l'ID de site Umami sont propres à chaque instance : ils ne
+sont pas écrits dans le code mais exposés dans `runtimeConfig` (nuxt.config.ts)
+et surchargeables par variable d'environnement, sans rebuild. Le service `nuxt`
+lit le fichier `.env` à son démarrage.
 
 ```bash
 cp .env.example .env
 ```
 
-- Lors de la configuration de GlitchTip, copiez le DSN fourni par l'interface
-  dans `NUXT_PUBLIC_GLITCHTIP_DSN`.
-- Pour Umami, créez un nouveau site depuis l'interface web (:3000) et reportez
-  son identifiant dans `NUXT_PUBLIC_UMAMI_WEBSITE_ID`.
+1. **Umami** — connectez-vous sur http://localhost:3000 (compte par défaut
+   `admin` / `umami`), créez un site, puis reportez son identifiant dans
+   `NUXT_PUBLIC_UMAMI_WEBSITE_ID`.
+2. **GlitchTip** — créez un compte et un projet sur http://localhost:8000,
+   puis reportez le DSN affiché dans `NUXT_PUBLIC_GLITCHTIP_DSN`.
+3. Appliquez la configuration : `docker compose up -d nuxt`.
 
 ![Umami Config Example](screenshots/Umami6.png)
 
