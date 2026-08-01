@@ -1,10 +1,12 @@
 import * as Sentry from "@sentry/vue";
 
 export default defineNuxtPlugin((nuxtApp) => {
+  const { glitchtip } = useRuntimeConfig().public;
+
   Sentry.init({
     app: nuxtApp.vueApp,
-    dsn: "CHANGE_ME@localhost:8000/1",
-    tracesSampleRate: 1,
+    dsn: glitchtip.dsn,
+    tracesSampleRate: glitchtip.tracesSampleRate,
     integrations: [Sentry.browserTracingIntegration()],
   });
 });

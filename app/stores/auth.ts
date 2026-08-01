@@ -8,11 +8,12 @@ export const useAuthStore = defineStore("auth", () => {
   const isLoggedIn = computed(() => !!user.value);
 
   async function login(username: string, password: string) {
-    const data = await $fetch<AuthUser>("https://dummyjson.com/auth/login", {
+    const { dummyJsonBaseUrl } = useRuntimeConfig().public;
+
+    user.value = await $fetch<AuthUser>(`${dummyJsonBaseUrl}/auth/login`, {
       method: "POST",
       body: { username, password },
     });
-    user.value = data;
   }
 
   function logout() {
