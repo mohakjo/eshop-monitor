@@ -71,41 +71,28 @@ onMounted(() => {
       <h2 class="text-xl font-semibold">Adresse d'expédition</h2>
 
       <div class="grid grid-cols-2 gap-4">
-        <div class="flex flex-col gap-1">
-          <label>Nom</label>
-          <input
-            v-model="form.name"
-            type="text"
-            class="rounded border px-2 py-1"
-          />
-          <span v-if="errors.name" class="text-xs text-red-500">{{
-            errors.name
-          }}</span>
-        </div>
-        <div class="flex flex-col gap-1">
-          <label>Prénom</label>
-          <input
-            v-model="form.firstname"
-            type="text"
-            class="rounded border px-2 py-1"
-          />
-          <span v-if="errors.firstname" class="text-xs text-red-500">{{
-            errors.firstname
-          }}</span>
-        </div>
+        <BaseField
+          v-model="form.name"
+          label="Nom"
+          variant="compact"
+          :error="errors.name"
+        />
+
+        <BaseField
+          v-model="form.firstname"
+          label="Prénom"
+          variant="compact"
+          :error="errors.firstname"
+        />
       </div>
 
-      <div class="flex flex-col gap-1">
-        <label>Email</label>
-        <input
-          v-model="form.email"
-          type="email"
-          class="rounded border px-2 py-1"
-        />
-        <span v-if="errors.email" class="text-xs text-red-500">{{
-          errors.email
-        }}</span>
-      </div>
+      <BaseField
+        v-model="form.email"
+        label="Email"
+        type="email"
+        variant="compact"
+        :error="errors.email"
+      />
 
       <CheckoutFormShipping v-model="form.shippingAddress" />
       <span v-if="errors.address" class="text-xs text-red-500">{{

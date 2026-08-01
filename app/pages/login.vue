@@ -29,23 +29,9 @@ async function onSubmit() {
     <h1 class="mb-8 text-2xl font-bold">Connexion</h1>
 
     <form @submit.prevent="onSubmit" class="flex max-w-sm flex-col gap-4">
-      <div class="flex flex-col gap-1">
-        <label class="text-sm font-semibold">Nom d'utilisateur</label>
-        <input
-          v-model="form.username"
-          type="text"
-          class="rounded border px-3 py-2 text-sm outline-none focus:border-blue-400"
-        />
-      </div>
+      <BaseField v-model="form.username" label="Nom d'utilisateur" />
 
-      <div class="flex flex-col gap-1">
-        <label class="text-sm font-semibold">Mot de passe</label>
-        <input
-          v-model="form.password"
-          type="password"
-          class="rounded border px-3 py-2 text-sm outline-none focus:border-blue-400"
-        />
-      </div>
+      <BaseField v-model="form.password" label="Mot de passe" type="password" />
 
       <span v-if="error" class="text-xs text-red-500">{{ error }}</span>
 

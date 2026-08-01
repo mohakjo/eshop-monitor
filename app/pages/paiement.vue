@@ -56,44 +56,27 @@ async function onSubmit() {
     <h1 class="mb-8 text-2xl font-bold">Paiement</h1>
 
     <form @submit.prevent="onSubmit" class="flex max-w-lg flex-col gap-4">
-      <div class="flex flex-col gap-1">
-        <label class="text-sm font-semibold">Carte de crédit</label>
-        <input
-          v-model="form.cardNumber"
-          type="text"
-          placeholder="1234 5678 9012 3456"
-          class="rounded border px-3 py-2 text-sm outline-none focus:border-blue-400"
-        />
-        <span v-if="errors.cardNumber" class="text-xs text-red-500">{{
-          errors.cardNumber
-        }}</span>
-      </div>
+      <BaseField
+        v-model="form.cardNumber"
+        label="Carte de crédit"
+        placeholder="1234 5678 9012 3456"
+        :error="errors.cardNumber"
+      />
 
       <div class="grid grid-cols-2 gap-4">
-        <div class="flex flex-col gap-1">
-          <label class="text-sm font-semibold">Date d'expiration</label>
-          <input
-            v-model="form.expiry"
-            type="text"
-            placeholder="MM/AA"
-            class="rounded border px-3 py-2 text-sm outline-none focus:border-blue-400"
-          />
-          <span v-if="errors.expiry" class="text-xs text-red-500">{{
-            errors.expiry
-          }}</span>
-        </div>
-        <div class="flex flex-col gap-1">
-          <label class="text-sm font-semibold">CVV</label>
-          <input
-            v-model="form.cvv"
-            type="text"
-            placeholder="123"
-            class="rounded border px-3 py-2 text-sm outline-none focus:border-blue-400"
-          />
-          <span v-if="errors.cvv" class="text-xs text-red-500">{{
-            errors.cvv
-          }}</span>
-        </div>
+        <BaseField
+          v-model="form.expiry"
+          label="Date d'expiration"
+          placeholder="MM/AA"
+          :error="errors.expiry"
+        />
+
+        <BaseField
+          v-model="form.cvv"
+          label="CVV"
+          placeholder="123"
+          :error="errors.cvv"
+        />
       </div>
 
       <button

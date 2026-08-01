@@ -23,31 +23,16 @@ const form = ref({
     </h1>
     <h2 class="text-xl font-semibold">Adresse d'expédition</h2>
     <div class="grid grid-cols-2 gap-4">
-      <div class="flex flex-col gap-1">
-        <label>Nom</label>
-        <input
-          v-model="form.name"
-          type="text"
-          class="rounded border px-2 py-1"
-        />
-      </div>
-      <div class="flex flex-col gap-1">
-        <label>Prénom</label>
-        <input
-          v-model="form.firstname"
-          type="text"
-          class="rounded border px-2 py-1"
-        />
-      </div>
+      <BaseField v-model="form.name" label="Nom" variant="compact" />
+      <BaseField v-model="form.firstname" label="Prénom" variant="compact" />
     </div>
-    <div class="flex flex-col gap-1">
-      <label>Email</label>
-      <input
-        v-model="form.email"
-        type="email"
-        class="rounded border px-2 py-1"
-      />
-    </div>
+
+    <BaseField
+      v-model="form.email"
+      label="Email"
+      type="email"
+      variant="compact"
+    />
     <CheckoutFormShipping v-model="form.shippingAddress" />
     <div class="flex items-center gap-2">
       <input type="checkbox" id="same-address" v-model="form.sameAddress" />
