@@ -1,6 +1,7 @@
 <script setup lang="ts">
 const cart = useCartStore();
 const router = useRouter();
+const { trackCart } = useAnalytics();
 
 const form = ref({
   name: "",
@@ -37,11 +38,7 @@ function onSubmit() {
 }
 
 onMounted(() => {
-  window.umami?.track("checkout_start", {
-    cart_total: cart.totalCart,
-    cart_items_count: cart.cart.length,
-    cart_quantity: cart.cart.reduce((total, item) => total + item.quantity, 0),
-  });
+  trackCart(ANALYTICS_EVENTS.checkoutStart, cart.cart);
 });
 </script>
 

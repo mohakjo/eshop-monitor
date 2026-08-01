@@ -1,6 +1,8 @@
 <script setup lang="ts">
 const route = useRoute();
 
+const { trackProduct } = useAnalytics();
+
 const { data: product, status, error } = await useProduct(route.params.id);
 
 const quantity = ref(1);
@@ -13,19 +15,17 @@ watchEffect(() => {
   }
 });
 
+/** Délai volontaire : on ne compte une vue qu'après une demi-seconde à l'écran. */
+const VIEW_TRACKING_DELAY_MS = 500;
+
 onMounted(() => {
   setTimeout(() => {
     if (!product.value) {
       return;
     }
 
-    window.umami?.track("view_product", {
-      product_id: product.value.id,
-      product_name: product.value.title,
-      product_category: product.value.category,
-      product_price: product.value.price,
-    });
-  }, 500);
+    trackProduct(ANALYTICS_EVENTS.viewProduct, product.value);
+  }, VIEW_TRACKING_DELAY_MS);
 });
 </script>
 

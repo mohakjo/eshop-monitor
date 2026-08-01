@@ -1,6 +1,8 @@
 import type { CartItem, Product } from "~/types";
 
 export const useCartStore = defineStore("cart", () => {
+  const { trackProduct } = useAnalytics();
+
   const cart = useCookie<CartItem[]>("cart", {
     default: () => [],
   });
@@ -26,12 +28,7 @@ export const useCartStore = defineStore("cart", () => {
       cart.value = [...cart.value, { ...product, quantity }];
     }
 
-    window.umami?.track("add_to_cart", {
-      product_id: product.id,
-      product_name: product.title,
-      product_category: product.category,
-      product_price: product.price,
-    });
+    trackProduct(ANALYTICS_EVENTS.addToCart, product);
   }
 
   function changeQuantity(product: Product, quantity: number) {
