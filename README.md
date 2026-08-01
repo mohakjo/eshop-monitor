@@ -158,6 +158,14 @@ Les quatre événements du plan de marquage sont émis depuis
 `app/composables/useAnalytics.ts`, qui centralise les noms d'événements et la
 construction des propriétés.
 
+![Événements personnalisés Umami](screenshots/umami-events.png)
+
+Umami enregistre **11 événements** répartis sur **4 événements uniques** — les
+quatre étapes du tunnel, et elles seules. Cette vue compte **3 visiteurs** là où
+le dashboard en affiche 4 : le quatrième est celui qui a rebondi sur la page
+d'accueil, sans jamais déclencher le moindre événement. Les deux chiffres se
+recoupent donc exactement avec le taux de rebond de 25 %.
+
 ![Tunnel d'achat Umami](screenshots/umami-funnel.png)
 
 Le même tunnel se lit de trois façons, chacune répondant à une question
