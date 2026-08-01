@@ -158,21 +158,32 @@ Les quatre événements du plan de marquage sont émis depuis
 `app/composables/useAnalytics.ts`, qui centralise les noms d'événements et la
 construction des propriétés.
 
-Deux lectures complémentaires du même tunnel : le nombre d'**occurrences**
-d'événements, et le nombre de **visiteurs uniques** ayant atteint chaque étape —
-c'est cette seconde mesure qu'affiche le rapport _Funnel_ d'Umami.
+![Tunnel d'achat Umami](screenshots/umami-funnel.png)
 
-| Étape              | Occurrences | Visiteurs | Passage vs étape précédente |
-| ------------------ | ----------- | --------- | --------------------------- |
-| `view_product`     | 5           | 3         | —                           |
-| `add_to_cart`      | 3           | 2         | 67 %                        |
-| `checkout_start`   | 2           | 2         | 100 %                       |
-| `checkout_success` | 1           | 1         | 50 %                        |
+Le même tunnel se lit de trois façons, chacune répondant à une question
+différente :
 
-L'écart entre les deux colonnes est normal : un même visiteur a consulté
-plusieurs fiches produit et ajouté plusieurs articles à son panier.
+| Étape              | Occurrences | Visiteurs | Conversion depuis l'étape 1 | Passage depuis l'étape précédente |
+| ------------------ | ----------- | --------- | --------------------------- | --------------------------------- |
+| `view_product`     | 5           | 3         | 100 %                       | —                                 |
+| `add_to_cart`      | 3           | 2         | 67 %                        | 67 %                              |
+| `checkout_start`   | 2           | 2         | 67 %                        | 100 %                             |
+| `checkout_success` | 1           | 1         | 33 %                        | 50 %                              |
 
-**Taux de conversion global** : 1 `checkout_success` pour 4 visites = **25 %**.
+- Les **occurrences** comptent les événements émis ; les **visiteurs** comptent
+  les personnes distinctes ayant atteint l'étape. L'écart est normal : un même
+  visiteur a consulté plusieurs fiches et ajouté plusieurs articles.
+- La colonne **conversion depuis l'étape 1** est celle qu'affiche le rapport
+  _Funnel_ d'Umami. Elle mesure l'érosion cumulée du tunnel.
+- La colonne **passage depuis l'étape précédente** est dérivée de la
+  précédente. C'est elle qui localise la fuite, étape par étape.
+
+**Deux taux de conversion, deux lectures.** Rapporté aux 4 visites du site,
+une commande aboutie donne une conversion globale de **25 %**. Rapporté aux 3
+visiteurs réellement entrés dans le tunnel (ceux qui ont consulté au moins une
+fiche produit), le taux de conversion du tunnel est de **33 %** — c'est la
+valeur affichée par Umami. La première mesure l'efficacité du site dans son
+ensemble, la seconde celle du tunnel une fois l'intérêt manifesté.
 
 **Analyse des abandons.** La première fuite se situe entre la consultation
 d'une fiche produit et l'ajout au panier : un visiteur sur trois repart sans
