@@ -7,16 +7,23 @@ const form = ref({
   expiry: "",
   cvv: "",
 });
-const errors = ref<Record<string, string>>({});
-function validate() {
-  errors.value = {};
-  if (!form.value.cardNumber)
-    errors.value.cardNumber = "Le numéro de carte est requis";
-  if (!form.value.expiry)
-    errors.value.expiry = "La date d'expiration est requise";
-  if (!form.value.cvv) errors.value.cvv = "Le CVV est requis";
-  return Object.keys(errors.value).length === 0;
-}
+const { errors, validate } = useFormValidation(() => {
+  const { cardNumber, expiry, cvv } = form.value;
+
+  return [
+    {
+      field: "cardNumber",
+      valid: isFilled(cardNumber),
+      message: "Le numéro de carte est requis",
+    },
+    {
+      field: "expiry",
+      valid: isFilled(expiry),
+      message: "La date d'expiration est requise",
+    },
+    { field: "cvv", valid: isFilled(cvv), message: "Le CVV est requis" },
+  ];
+});
 
 onMounted(() => {
   const transaction = Sentry.startInactiveSpan({
@@ -29,19 +36,20 @@ onMounted(() => {
   }, 0);
 });
 
+/** Panne simulée du prestataire de paiement, une tentative sur trois. */
+const PAYMENT_FAILURE_RATE = 0.33;
+
+async function chargeCard() {
+  if (Math.random() < PAYMENT_FAILURE_RATE) {
+    throw new TypeError("Payment gateway timeout: charge_id is undefined");
+  }
+}
+
 async function onSubmit() {
   if (!validate()) return;
 
   try {
-    await new Promise<void>((resolve, reject) => {
-      if (Math.random() < 0.33) {
-        reject(
-          new TypeError("Payment gateway timeout: charge_id is undefined"),
-        );
-      } else {
-        resolve();
-      }
-    });
+    await chargeCard();
 
     router.push("/confirmation");
   } catch (error) {

@@ -13,23 +13,39 @@ const form = ref({
   sameAddress: true,
 });
 
-const errors = ref<Record<string, string>>({});
+const { errors, validate } = useFormValidation(() => {
+  const { name, firstname, email, shippingAddress } = form.value;
 
-function validate() {
-  errors.value = {};
-  if (!form.value.name) errors.value.name = "Le nom est requis";
-  if (!form.value.firstname) errors.value.firstname = "Le prénom est requis";
-  if (!form.value.email) errors.value.email = "L'email est requis";
-  else if (!/\S+@\S+\.\S+/.test(form.value.email))
-    errors.value.email = "L'email est invalide";
-  if (!form.value.shippingAddress.address)
-    errors.value.address = "L'adresse est requise";
-  if (!form.value.shippingAddress.post_code)
-    errors.value.post_code = "Le code postal est requis";
-  if (!form.value.shippingAddress.city)
-    errors.value.city = "La ville est requise";
-  return Object.keys(errors.value).length === 0;
-}
+  return [
+    { field: "name", valid: isFilled(name), message: "Le nom est requis" },
+    {
+      field: "firstname",
+      valid: isFilled(firstname),
+      message: "Le prénom est requis",
+    },
+    { field: "email", valid: isFilled(email), message: "L'email est requis" },
+    {
+      field: "email",
+      valid: !email || isEmail(email),
+      message: "L'email est invalide",
+    },
+    {
+      field: "address",
+      valid: isFilled(shippingAddress.address),
+      message: "L'adresse est requise",
+    },
+    {
+      field: "post_code",
+      valid: isFilled(shippingAddress.post_code),
+      message: "Le code postal est requis",
+    },
+    {
+      field: "city",
+      valid: isFilled(shippingAddress.city),
+      message: "La ville est requise",
+    },
+  ];
+});
 
 function onSubmit() {
   if (validate()) {
