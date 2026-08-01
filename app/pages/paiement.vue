@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import { onMounted, ref } from "vue";
-import { useRouter } from "nuxt/app";
 import * as Sentry from "@sentry/vue";
 
 const router = useRouter();

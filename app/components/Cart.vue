@@ -1,6 +1,4 @@
-<script setup>
-import { useCartStore } from "~/stores/cart";
-
+<script setup lang="ts">
 const cartStore = useCartStore();
 </script>
 

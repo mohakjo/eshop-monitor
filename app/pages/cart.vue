@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { useCartStore } from "~/stores/cart";
 const cartStore = useCartStore();
 const router = useRouter();
 const isMounted = ref(false);

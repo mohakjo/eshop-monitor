@@ -1,7 +1,4 @@
 <script setup lang="ts">
-import type { ProductApiResponse } from "~/types/Product";
-import { ref, computed } from "vue";
-
 const show = ref(false);
 const router = useRouter();
 
@@ -9,7 +6,7 @@ const closeMenuOnNavigation = router.afterEach(() => {
   show.value = false;
 });
 
-const { products, status, error } = useProducts();
+const { products } = useProducts();
 
 const categories = computed(() => {
   return [...new Set(products.value?.map((p) => p.category) || [])];

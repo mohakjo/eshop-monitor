@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import type { Product } from "~/types/Product";
-import { useCartStore } from "~/stores/cart";
 
 const props = defineProps<{
   product: Product;

@@ -1,5 +1,4 @@
 import * as Sentry from "@sentry/vue";
-import { defineNuxtPlugin } from "nuxt/app";
 
 export default defineNuxtPlugin((nuxtApp) => {
   Sentry.init({

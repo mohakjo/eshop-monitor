@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import { watch, watchEffect } from "vue";
-
 const route = useRoute();
 
 const { data: product, status, error } = await useProduct(route.params.id);
