@@ -1,42 +1,36 @@
 <script setup lang="ts">
-const show = ref(false);
+import IconClose from "~/components/Icon/Close.vue";
+import IconMenu from "~/components/Icon/Menu.vue";
+
 const router = useRouter();
+const { categories } = useCategories();
 
-const closeMenuOnNavigation = router.afterEach(() => {
-  show.value = false;
+const isOpen = ref(false);
+
+/** Le menu mobile se referme dès qu'une navigation aboutit. */
+const stopClosingOnNavigation = router.afterEach(() => {
+  isOpen.value = false;
 });
 
-const { products } = useProducts();
-
-const categories = computed(() => {
-  return [...new Set(products.value?.map((p) => p.category) || [])];
-});
+onBeforeUnmount(stopClosingOnNavigation);
 
 function toggle() {
-  show.value = !show.value;
+  isOpen.value = !isOpen.value;
 }
-
-onBeforeUnmount(() => {
-  closeMenuOnNavigation();
-});
 </script>
 
 <template>
-  <IconMenu
-    v-if="!show"
+  <component
+    :is="isOpen ? IconClose : IconMenu"
     class="absolute top-5 right-5 block size-10 cursor-pointer lg:hidden"
-    @click="toggle"
-  />
-
-  <IconClose
-    v-else
-    class="absolute top-5 right-5 block size-10 cursor-pointer lg:hidden"
+    :aria-label="isOpen ? 'Fermer le menu' : 'Ouvrir le menu'"
+    :aria-expanded="isOpen"
     @click="toggle"
   />
 
   <nav
     class="bg-gray border-r-blue fixed top-0 left-0 z-50 flex h-dvh w-56 flex-col items-center gap-8 border-r-4 px-6 py-12 text-white transition-transform duration-300 ease-in-out lg:translate-x-0"
-    :class="show ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'"
+    :class="isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'"
   >
     <NuxtLink to="/" class="w-full cursor-pointer">
       <figure class="font-ultra flex flex-col items-center gap-3 text-xl">
