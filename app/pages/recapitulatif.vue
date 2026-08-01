@@ -3,6 +3,8 @@ const cart = useCartStore();
 const router = useRouter();
 const { trackCart } = useAnalytics();
 
+usePageLoadSpan("checkout-summary-load");
+
 const form = ref({
   name: "",
   firstname: "",

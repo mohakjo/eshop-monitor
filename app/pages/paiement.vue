@@ -25,16 +25,7 @@ const { errors, validate } = useFormValidation(() => {
   ];
 });
 
-onMounted(() => {
-  const transaction = Sentry.startInactiveSpan({
-    name: "checkout-confirmation-load",
-    op: "page.load",
-  });
-
-  setTimeout(() => {
-    transaction.end();
-  }, 0);
-});
+usePageLoadSpan("checkout-payment-load");
 
 /** Panne simulée du prestataire de paiement, une tentative sur trois. */
 const PAYMENT_FAILURE_RATE = 0.33;
