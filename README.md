@@ -158,23 +158,35 @@ Les quatre événements du plan de marquage sont émis depuis
 `app/composables/useAnalytics.ts`, qui centralise les noms d'événements et la
 construction des propriétés.
 
-| Étape              | Événements | Perte vs étape précédente |
-| ------------------ | ---------- | ------------------------- |
-| `view_product`     | 5          | —                         |
-| `add_to_cart`      | 3          | −40 %                     |
-| `checkout_start`   | 2          | −33 %                     |
-| `checkout_success` | 1          | −50 %                     |
+Deux lectures complémentaires du même tunnel : le nombre d'**occurrences**
+d'événements, et le nombre de **visiteurs uniques** ayant atteint chaque étape —
+c'est cette seconde mesure qu'affiche le rapport _Funnel_ d'Umami.
+
+| Étape              | Occurrences | Visiteurs | Passage vs étape précédente |
+| ------------------ | ----------- | --------- | --------------------------- |
+| `view_product`     | 5           | 3         | —                           |
+| `add_to_cart`      | 3           | 2         | 67 %                        |
+| `checkout_start`   | 2           | 2         | 100 %                       |
+| `checkout_success` | 1           | 1         | 50 %                        |
+
+L'écart entre les deux colonnes est normal : un même visiteur a consulté
+plusieurs fiches produit et ajouté plusieurs articles à son panier.
 
 **Taux de conversion global** : 1 `checkout_success` pour 4 visites = **25 %**.
 
-**Analyse des abandons.** La plus grosse fuite en valeur absolue se situe entre
-la consultation d'une fiche produit et l'ajout au panier : deux consultations
-sur cinq ne débouchent sur rien. C'est un écart normal en e-commerce
-(comparaison, simple curiosité), mais c'est le levier au plus fort volume.
+**Analyse des abandons.** La première fuite se situe entre la consultation
+d'une fiche produit et l'ajout au panier : un visiteur sur trois repart sans
+rien mettre au panier, et en volume d'événements deux consultations sur cinq ne
+débouchent sur rien. C'est un écart normal en e-commerce (comparaison, simple
+curiosité), mais c'est le levier au plus fort volume.
 
-La perte la plus préoccupante est la dernière : **une commande sur deux se
+En revanche, **tous les visiteurs ayant rempli un panier ont engagé la
+commande** (100 % de passage entre `add_to_cart` et `checkout_start`) : le
+panier et l'accès au tunnel ne posent aucun problème d'ergonomie.
+
+La perte la plus préoccupante est donc la dernière : **une commande sur deux se
 perd entre `checkout_start` et `checkout_success`**, c'est-à-dire à l'étape de
-paiement. C'est précisément le symptôme décrit par le Product Owner, et il est
+paiement, et uniquement là. C'est précisément le symptôme décrit par le Product Owner, et il est
 corrélé à la panne intermittente du prestataire de paiement simulée dans
 `app/pages/paiement.vue` (une tentative sur trois échoue). L'analytique seule
 ne permet pas de trancher entre un abandon volontaire et une erreur technique :
