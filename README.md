@@ -267,10 +267,55 @@ transmise explicitement par `Sentry.captureException(error)`.
 TypeError: Payment gateway timeout: charge_id is undefined
 ```
 
-Pour la déclencher : dérouler le tunnel jusqu'à `/paiement`, renseigner les
-champs, puis valider plusieurs fois — l'incident apparaît dans le projet
-GlitchTip avec son type, son message, le contexte navigateur/OS et la pile
-d'appels pointant sur `chargeCard()` puis `onSubmit()`.
+Pour la déclencher : ouvrir `/paiement`, renseigner les champs puis valider. En
+cas de succès l'utilisateur est redirigé vers `/confirmation` ; il faut donc
+revenir sur la page pour retenter, jusqu'à tomber sur l'échec.
+
+### Ce que GlitchTip a capturé
+
+![Erreur capturée par GlitchTip](screenshots/glitchtip-error.png)
+
+_Vue « Event Details » de l'incident `FOOCOMMERCE-3` : identification de
+l'exception, contexte d'exécution et tags. La pile d'appels et les breadcrumbs
+figurent plus bas sur la même page._
+
+| Champ         | Valeur relevée                                    |
+| ------------- | ------------------------------------------------- |
+| Type          | `TypeError`                                       |
+| Message       | `Payment gateway timeout: charge_id is undefined` |
+| Page fautive  | `/paiement`                                       |
+| Navigateur    | Safari 26.1                                       |
+| Système       | Mac OS X 10.15.7                                  |
+| Environnement | `production`                                      |
+| Mécanisme     | `generic`, `handled: yes`                         |
+| Breadcrumbs   | 45 entrées                                        |
+
+Le marqueur `handled: yes` confirme que l'exception a été interceptée puis
+transmise volontairement par `Sentry.captureException()`, et non collectée par
+le gestionnaire global — c'est bien la simulation de panne qui est remontée.
+
+Les 45 breadcrumbs rejouent la fin du parcours dans l'ordre : clics et saisies
+successives dans les champs du formulaire de paiement, puis clic sur le bouton
+`[type="submit"]` — soit « Confirmer la commande ». L'incident est donc
+formellement rattaché à la validation du paiement, et non au rendu de la page.
+
+### Données personnelles
+
+Le projet GlitchTip a l'option `scrubIPAddresses` activée : l'adresse IP visible
+sur la capture (`172.67.205.0`) est tronquée sur son dernier octet, elle ne
+permet pas de réidentifier le visiteur. Côté Umami, l'analytique fonctionne sans
+cookie et aucun identifiant personnel n'est transmis : les propriétés
+d'événements ne portent que des données produit (`product_id`, `product_price`)
+et des agrégats de panier (`cart_total`, `cart_quantity`). Les champs du
+formulaire de commande — nom, e-mail, adresse — ne sont envoyés à aucun des deux
+services.
+
+> **Limite constatée.** La pile d'appels renvoyée pointe sur le bundle minifié
+> (`/_nuxt/DKuZrCb0.js`, fonctions `p` et `c`) : sans _source maps_ transmises à
+> GlitchTip, les noms d'origine `chargeCard()` et `onSubmit()` n'apparaissent
+> pas. C'est le prolongement naturel de cette intégration : publier les source
+> maps du build (via `sentry-cli` ou l'option `sourcemap` de Nuxt) rendrait la
+> pile directement lisible et pointerait la ligne exacte de `paiement.vue`.
 
 ### Suivi de performance
 
@@ -283,12 +328,24 @@ l'utilisateur.
 
 ### Exploitation par un développeur
 
-Les breadcrumbs reconstituent le parcours ayant mené au crash : navigation vers
-`/paiement`, saisie des champs, clic sur « Confirmer la commande ». Combinés à
-la pile d'appels, ils localisent l'échec dans la promesse de paiement plutôt
-que dans le rendu du formulaire. Le développeur sait alors qu'il doit fiabiliser
-l'appel au prestataire — reprise sur erreur, délai d'attente explicite, message
-utilisateur — et non corriger la validation du formulaire.
+Sans GlitchTip, ce bug est un cauchemar : il ne survient qu'une fois sur trois,
+ne laisse aucune trace serveur puisqu'il se produit entièrement dans le
+navigateur, et l'utilisateur qui le rencontre abandonne sans rien signaler.
+
+Avec l'incident remonté, le développeur dispose de trois éléments immédiats.
+Le **message** nomme la cause probable — une réponse du prestataire sans
+`charge_id`, donc un appel qui n'a pas abouti. Les **breadcrumbs** prouvent que
+l'échec suit le clic sur « Confirmer la commande » et non le chargement de la
+page : le formulaire et sa validation sont hors de cause. Le **contexte**
+(Safari 26.1, Mac OS X, environnement `production`) permet de vérifier s'il
+s'agit d'un problème spécifique à un navigateur — ici il faudrait plusieurs
+occurrences pour trancher.
+
+La correction porte donc sur la fiabilisation de l'appel au prestataire :
+délai d'attente explicite, reprise sur erreur, et surtout un message
+utilisateur qui invite à réessayer plutôt que de laisser la commande en
+suspens. Le champ `charge_id` non défini indique par ailleurs qu'il faut
+valider la réponse du prestataire avant de la consommer.
 
 C'est aussi ce qui permet de qualifier la fuite de 50 % observée à la dernière
 étape du tunnel Umami : si le volume d'incidents GlitchTip suit celui des
